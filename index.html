@@ -38,8 +38,8 @@
   .view.active{display:block;}
 
   /* ---- COMPARE VIEW ---- */
-  .compare-grid{display:grid;grid-template-columns:1fr 440px;gap:24px;align-items:start;}
-  @media (max-width:800px){.compare-grid{grid-template-columns:1fr;}}
+  .compare-grid{display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;}
+  @media (max-width:760px){.compare-grid{grid-template-columns:1fr;}}
 
   .catalog-card{background:var(--paper-strip);border:1px solid var(--rule-strong);border-radius:10px;padding:18px 20px;}
   .catalog-head{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);font-family:'Space Mono',monospace;margin-bottom:12px;}
@@ -63,12 +63,8 @@
   .r-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;text-align:center;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:2px;}
   .r-sub{font-size:10px;text-align:center;color:var(--ink-soft);margin-bottom:14px;}
   .r-divider{border:none;border-top:1px dashed var(--rule-strong);margin:10px 0;}
-  
-  .cart-item-block{font-size:11.5px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--rule);}
-  .cart-item-head{font-weight:700;color:var(--ink);margin-bottom:6px;font-family:'Space Grotesk',sans-serif;font-size:13px;}
-  .cart-sub-row{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);padding:2px 0 2px 10px;}
-
-  .store-block{margin-top:14px;padding:10px 12px 12px;border-radius:6px;border:1px solid var(--rule);}
+  .r-line-item{font-size:11px;color:var(--ink-soft);display:flex;justify-content:space-between;padding:2px 0;}
+  .store-block{margin-top:14px;padding:10px 10px 12px;border-radius:6px;border:1px solid var(--rule);}
   .store-block.best{border-color:var(--till-green);background:var(--till-green-light);}
   .store-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;}
   .store-block.best .store-row{color:var(--till-green);}
@@ -79,6 +75,21 @@
   .print-btn:hover{background:var(--till-green);}
   .print-btn:disabled{background:var(--rule-strong);cursor:not-allowed;}
   .save-note{font-size:10px;color:var(--ink-soft);text-align:center;margin-top:8px;}
+
+  /* ---- PRINT-ONLY MATRIX TABLE ---- */
+  #printMatrixContainer { display: none; }
+
+  @media print {
+    body { background: white; color: black; }
+    .topbar, .tabs, .catalog-card, .print-btn, .save-note, .r-title, .r-sub, .r-divider, #storeBlocks { display: none !important; }
+    #printMatrixContainer { display: block !important; margin-top: 20px; }
+    .receipt { border: none; background: white; padding: 0; position: static; }
+    .receipt::before, .receipt::after { display: none; }
+    .print-table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 11px; margin-bottom: 20px; }
+    .print-table th, .print-table td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+    .print-table th { background: #eee; font-weight: bold; }
+    .print-totals { border-top: 2px solid #333; padding-top: 10px; font-family: 'Space Mono', monospace; font-size: 12px; }
+  }
 
   /* ---- FINANCE VIEW ---- */
   .ledger-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
@@ -125,8 +136,15 @@
         <div class="r-sub" id="storeCount"></div>
         <hr class="r-divider">
         <div id="cartLines"></div>
-        <hr class="r-divider">
         <div id="storeBlocks"></div>
+        
+        <!-- Hidden container that only shows up on print -->
+        <div id="printMatrixContainer">
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;margin-bottom:10px;text-align:center;">COSTREQUEST PRICE COMPARISON ORDER</div>
+          <div id="printTableContent"></div>
+          <div id="printTotalsContent" class="print-totals"></div>
+        </div>
+
         <button class="print-btn" id="printBtn" disabled>Print order</button>
         <div class="save-note" id="saveNote"></div>
       </div>
@@ -236,24 +254,15 @@ function renderReceipt(){
     storeBlocks.innerHTML = '';
     printBtn.disabled = true;
     document.getElementById('saveNote').textContent = '';
+    document.getElementById('printTableContent').innerHTML = '';
+    document.getElementById('printTotalsContent').innerHTML = '';
     return;
   }
 
-  // Render vertical breakdown per product with parallel supermarket prices
+  // On-screen summary list
   cartLines.innerHTML = items.map(id => {
     const p = products.find(x=>x.id===id);
-    const qty = cart[id];
-    return `
-      <div class="cart-item-block">
-        <div class="cart-item-head">${p.name} × ${qty}</div>
-        ${stores.map(st => `
-          <div class="cart-sub-row">
-            <span>↳ ${st}</span>
-            <span>${fmt(p.prices[st] * qty)}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
+    return `<div class="r-line-item"><span>${p.name} × ${cart[id]}</span></div>`;
   }).join('');
 
   const totals = stores.map(store => {
@@ -277,6 +286,45 @@ function renderReceipt(){
       </div>
     </div>
   `).join('');
+
+  // Generate the matrix table layout specifically for printing
+  let printTableHTML = `
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Carrefour</th>
+          <th>Naivas</th>
+          <th>Quickmart</th>
+          <th>Chandarana</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  items.forEach(id => {
+    const p = products.find(x=>x.id===id);
+    const qty = cart[id];
+    printTableHTML += `
+      <tr>
+        <td>${p.name} × ${qty}</td>
+        <td>${fmt(p.prices.Carrefour * qty)}</td>
+        <td>${fmt(p.prices.Naivas * qty)}</td>
+        <td>${fmt(p.prices.Quickmart * qty)}</td>
+        <td>${fmt(p.prices.Chandarana * qty)}</td>
+      </tr>
+    `;
+  });
+  printTableHTML += `</tbody></table>`;
+  document.getElementById('printTableContent').innerHTML = printTableHTML;
+
+  let printTotalsHTML = `<div style="font-weight:bold; margin-bottom:8px;">STORE TOTALS:</div>`;
+  totals.forEach(t => {
+    printTotalsHTML += `<div>• ${t.store}: ${fmt(t.total)}</div>`;
+  });
+  if(savings > 0){
+    printTotalsHTML += `<div style="margin-top:8px; font-weight:bold;">Recommendation: You save ${fmt(savings)} shopping at ${totals[0].store} vs ${totals[totals.length-1].store}</div>`;
+  }
+  document.getElementById('printTotalsContent').innerHTML = printTotalsHTML;
 
   printBtn.disabled = false;
   document.getElementById('saveNote').textContent = savings > 0
