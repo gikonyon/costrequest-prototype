@@ -38,8 +38,8 @@
   .view.active{display:block;}
 
   /* ---- COMPARE VIEW ---- */
-  .compare-grid{display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;}
-  @media (max-width:760px){.compare-grid{grid-template-columns:1fr;}}
+  .compare-grid{display:grid;grid-template-columns:1fr 420px;gap:24px;align-items:start;}
+  @media (max-width:800px){.compare-grid{grid-template-columns:1fr;}}
 
   .catalog-card{background:var(--paper-strip);border:1px solid var(--rule-strong);border-radius:10px;padding:18px 20px;}
   .catalog-head{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);font-family:'Space Mono',monospace;margin-bottom:12px;}
@@ -63,8 +63,12 @@
   .r-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;text-align:center;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:2px;}
   .r-sub{font-size:10px;text-align:center;color:var(--ink-soft);margin-bottom:14px;}
   .r-divider{border:none;border-top:1px dashed var(--rule-strong);margin:10px 0;}
-  .r-line-item{font-size:11px;color:var(--ink-soft);display:flex;justify-content:space-between;padding:2px 0;}
-  .store-block{margin-top:14px;padding:10px 10px 12px;border-radius:6px;border:1px solid var(--rule);}
+  
+  .cart-item-block{font-size:11px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dotted var(--rule);}
+  .cart-item-head{font-weight:700;color:var(--ink);margin-bottom:4px;display:flex;justify-content:space-between;}
+  .cart-sub-row{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-soft);padding-left:8px;}
+
+  .store-block{margin-top:14px;padding:10px 12px 12px;border-radius:6px;border:1px solid var(--rule);}
   .store-block.best{border-color:var(--till-green);background:var(--till-green-light);}
   .store-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;}
   .store-block.best .store-row{color:var(--till-green);}
@@ -121,6 +125,7 @@
         <div class="r-sub" id="storeCount"></div>
         <hr class="r-divider">
         <div id="cartLines"></div>
+        <hr class="r-divider">
         <div id="storeBlocks"></div>
         <button class="print-btn" id="printBtn" disabled>Print order</button>
         <div class="save-note" id="saveNote"></div>
@@ -234,9 +239,23 @@ function renderReceipt(){
     return;
   }
 
+  // Show itemized breakdown with parallel store pricing per product in the cart
   cartLines.innerHTML = items.map(id => {
     const p = products.find(x=>x.id===id);
-    return `<div class="r-line-item"><span>${p.name} × ${cart[id]}</span></div>`;
+    const qty = cart[id];
+    return `
+      <div class="cart-item-block">
+        <div class="cart-item-head">
+          <span>${p.name} × ${qty}</span>
+        </div>
+        ${stores.map(st => `
+          <div class="cart-sub-row">
+            <span>↳ ${st}</span>
+            <span>${fmt(p.prices[st] * qty)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }).join('');
 
   const totals = stores.map(store => {
