@@ -52,15 +52,20 @@
 
   /* ---- RECEIPT / DISPLAY PANEL ---- */
   .receipt{background:var(--paper-strip);border:1px solid var(--rule-strong);border-radius:10px;padding:24px;position:relative;font-family:'Space Mono',monospace;}
-  .r-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;text-align:center;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:16px;}
-  
-  .matrix-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;}
-  .matrix-table th, .matrix-table td{border:1px solid var(--rule-strong);padding:8px 10px;text-align:left;}
-  .matrix-table th{background:var(--paper);font-weight:700;color:var(--ink);font-family:'Space Grotesk',sans-serif;}
-  
-  .store-totals-title{font-weight:700;font-size:13px;font-family:'Space Grotesk',sans-serif;margin-bottom:8px;text-transform:uppercase;}
-  .store-total-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;}
-  .store-total-row.best{color:var(--till-green);font-weight:700;}
+  .r-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;text-align:center;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:4px;}
+  .r-sub{font-size:11px;text-align:center;color:var(--ink-soft);margin-bottom:16px;}
+  .r-divider{border:none;border-top:1px dashed var(--rule-strong);margin:12px 0;}
+
+  .cart-item-block{font-size:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--rule);}
+  .cart-item-head{font-weight:700;color:var(--ink);margin-bottom:6px;font-family:'Space Grotesk',sans-serif;font-size:13.5px;}
+  .cart-sub-row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-soft);padding:3px 0 3px 12px;}
+
+  .store-block{margin-top:12px;padding:12px 14px;border-radius:6px;border:1px solid var(--rule);}
+  .store-block.best{border-color:var(--till-green);background:var(--till-green-light);}
+  .store-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;}
+  .store-block.best .store-row{color:var(--till-green);}
+  .badge{font-size:9px;font-family:'Space Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:var(--till-green);color:var(--till-green-light);padding:2px 6px;border-radius:3px;margin-left:6px;}
+  .store-total{font-size:14px;}
 
   .empty-note{font-size:13px;color:var(--ink-soft);text-align:center;padding:40px 0;font-family:'Space Grotesk',sans-serif;}
   
@@ -69,13 +74,19 @@
   .print-btn:disabled{background:var(--rule-strong);cursor:not-allowed;}
   .save-note{font-size:11px;color:var(--ink-soft);text-align:center;margin-top:10px;}
 
-  /* ---- PRINT STYLING ---- */
+  /* ---- PRINT STYLING (Matrix Table for Printout) ---- */
+  #printMatrixContainer { display: none; }
+
   @media print {
     body { background: white; color: black; }
-    .topbar, .tabs, .catalog-card, .print-btn, .save-note { display: none !important; }
-    .compare-grid { display: block; }
+    .topbar, .tabs, .catalog-card, .print-btn, .save-note, .r-title, .r-sub, .r-divider, #cartLinesContainer, #storeBlocksContainer { display: none !important; }
+    #printMatrixContainer { display: block !important; }
     .receipt { border: none; background: white; padding: 0; }
-    .matrix-table th, .matrix-table td { border: 1px solid #333; }
+    .print-title { font-family: 'Space Grotesk',sans-serif; font-weight: 700; font-size: 16px; text-align: center; margin-bottom: 16px; text-transform: uppercase; }
+    .matrix-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; font-family: 'Space Mono',monospace; }
+    .matrix-table th, .matrix-table td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+    .matrix-table th { background: #eee; font-weight: bold; font-family: 'Space Grotesk',sans-serif; }
+    .print-totals { border-top: 2px solid #333; padding-top: 12px; font-family: 'Space Mono',monospace; font-size: 12px; }
   }
 
   /* ---- FINANCE VIEW ---- */
@@ -119,8 +130,22 @@
       </div>
 
       <div class="receipt">
-        <div class="r-title">Costrequest Price Comparison Order</div>
-        <div id="receiptContent"></div>
+        <div class="r-title">Price comparison</div>
+        <div class="r-sub" id="storeCount">4 supermarkets checked</div>
+        <hr class="r-divider">
+        
+        <!-- On-screen Cart Display with Itemized Sub-prices -->
+        <div id="cartLinesContainer"></div>
+        <hr class="r-divider">
+        <div id="storeBlocksContainer"></div>
+
+        <!-- Print-only Matrix Table Container -->
+        <div id="printMatrixContainer">
+          <div class="print-title">Costrequest Price Comparison Order</div>
+          <div id="printTableContent"></div>
+          <div id="printTotalsContent" class="print-totals"></div>
+        </div>
+
         <button class="print-btn" id="printBtn" disabled>Print order</button>
         <div class="save-note" id="saveNote"></div>
       </div>
@@ -219,16 +244,38 @@ function changeQty(id, delta){
 
 function renderReceipt(){
   const items = Object.keys(cart);
-  const receiptContent = document.getElementById('receiptContent');
+  const cartLinesContainer = document.getElementById('cartLinesContainer');
+  const storeBlocksContainer = document.getElementById('storeBlocksContainer');
   const printBtn = document.getElementById('printBtn');
 
   if(items.length === 0){
-    receiptContent.innerHTML = '<div class="empty-note">Your cart is empty.<br>Add quantities from the left to view the price comparison matrix.</div>';
+    cartLinesContainer.innerHTML = '<div class="empty-note">Your cart is empty.<br>Add products from the list.</div>';
+    storeBlocksContainer.innerHTML = '';
     printBtn.disabled = true;
     document.getElementById('saveNote').textContent = '';
+    document.getElementById('printTableContent').innerHTML = '';
+    document.getElementById('printTotalsContent').innerHTML = '';
     return;
   }
 
+  // 1. Render on-screen itemized breakdown with sub-prices
+  cartLinesContainer.innerHTML = items.map(id => {
+    const p = products.find(x=>x.id===id);
+    const qty = cart[id];
+    return `
+      <div class="cart-item-block">
+        <div class="cart-item-head">${p.name} × ${qty}</div>
+        ${stores.map(st => `
+          <div class="cart-sub-row">
+            <span>↳ ${st}</span>
+            <span>${fmt(p.prices[st] * qty)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+
+  // 2. Calculate store totals
   const totals = stores.map(store => {
     let total = 0;
     items.forEach(id => {
@@ -242,7 +289,17 @@ function renderReceipt(){
   const mostExpensive = totals[totals.length-1].total;
   const savings = mostExpensive - cheapest;
 
-  let html = `
+  storeBlocksContainer.innerHTML = totals.map((t,i) => `
+    <div class="store-block ${i===0 ? 'best' : ''}">
+      <div class="store-row">
+        <span>${t.store}${i===0 ? '<span class="badge">Best value</span>' : ''}</span>
+        <span class="store-total">${fmt(t.total)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // 3. Prepare Print-only Matrix Table HTML
+  let printTableHTML = `
     <table class="matrix-table">
       <thead>
         <tr>
@@ -255,11 +312,10 @@ function renderReceipt(){
       </thead>
       <tbody>
   `;
-
   items.forEach(id => {
     const p = products.find(x=>x.id===id);
     const qty = cart[id];
-    html += `
+    printTableHTML += `
       <tr>
         <td><strong>${p.name}</strong> × ${qty}</td>
         <td>${fmt(p.prices.Carrefour * qty)}</td>
@@ -269,24 +325,21 @@ function renderReceipt(){
       </tr>
     `;
   });
+  printTableHTML += `</tbody></table>`;
+  document.getElementById('printTableContent').innerHTML = printTableHTML;
 
-  html += `</tbody></table>`;
-
-  html += `<div class="store-totals-title">Store Totals:</div>`;
-  totals.forEach((t, i) => {
-    html += `
-      <div class="store-total-row ${i === 0 ? 'best' : ''}">
-        <span>• ${t.store}${i === 0 ? ' (Best Value)' : ''}</span>
-        <span>${fmt(t.total)}</span>
-      </div>
-    `;
+  let printTotalsHTML = `<div style="font-weight:bold; margin-bottom:8px; font-family:'Space Grotesk',sans-serif;">STORE TOTALS:</div>`;
+  totals.forEach(t => {
+    printTotalsHTML += `<div>• ${t.store}: ${fmt(t.total)}</div>`;
   });
+  if(savings > 0){
+    printTotalsHTML += `<div style="margin-top:10px; font-weight:bold;">Recommendation: You save ${fmt(savings)} shopping at ${totals[0].store} vs ${totals[totals.length-1].store}</div>`;
+  }
+  document.getElementById('printTotalsContent').innerHTML = printTotalsHTML;
 
-  receiptContent.innerHTML = html;
   printBtn.disabled = false;
-  
   document.getElementById('saveNote').textContent = savings > 0
-    ? `Recommendation: You save ${fmt(savings)} shopping at ${totals[0].store} vs ${totals[totals.length-1].store}`
+    ? `You save ${fmt(savings)} shopping at ${totals[0].store} vs ${totals[totals.length-1].store}`
     : '';
 }
 
