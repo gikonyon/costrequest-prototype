@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Costrequest — Price Compare Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ECE8DD;
+    --paper-strip:#FFFDF8;
+    --ink:#211F1B;
+    --ink-soft:#6B675C;
+    --rule:#CFC9B8;
+    --rule-strong:#B7B09B;
+    --till-green:#1F5C3F;
+    --till-green-light:#E4EFE7;
+    --flag-red:#9C3B2E;
+    --flag-red-light:#F5E5E1;
+    --gold:#9C7A1F;
+    --gold-light:#F2E9D2;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Space Grotesk',sans-serif;}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 64px;}
+
+  .topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;border-bottom:2px solid var(--ink);padding-bottom:14px;}
+  .brand{font-weight:700;font-size:26px;letter-spacing:-0.02em;}
+  .brand span{color:var(--till-green);}
+  .tagline{font-size:12px;color:var(--ink-soft);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;}
+
+  .tabs{display:flex;gap:2px;margin:22px 0 24px;background:var(--rule);border-radius:6px;padding:3px;width:fit-content;}
+  .tab{border:none;background:transparent;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;padding:9px 18px;border-radius:5px;cursor:pointer;color:var(--ink-soft);}
+  .tab.active{background:var(--paper-strip);color:var(--ink);}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ---- COMPARE VIEW ---- */
+  .compare-grid{display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;}
+  @media (max-width:760px){.compare-grid{grid-template-columns:1fr;}}
+
+  .catalog-card{background:var(--paper-strip);border:1px solid var(--rule-strong);border-radius:10px;padding:18px 20px;}
+  .catalog-head{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);font-family:'Space Mono',monospace;margin-bottom:12px;}
+  .prod-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--rule);}
+  .prod-row:last-child{border-bottom:none;}
+  .prod-name{font-size:14px;font-weight:500;}
+  .prod-unit{font-size:11px;color:var(--ink-soft);font-family:'Space Mono',monospace;}
+  .qty-controls{display:flex;align-items:center;gap:10px;}
+  .qty-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--ink);background:var(--paper-strip);font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);}
+  .qty-btn:hover{background:var(--ink);color:var(--paper-strip);}
+  .qty-num{font-family:'Space Mono',monospace;font-size:14px;min-width:16px;text-align:center;}
+
+  /* ---- RECEIPT ---- */
+  .receipt{background:var(--paper-strip);border:1px solid var(--rule-strong);border-radius:2px;padding:22px 20px 20px;position:relative;font-family:'Space Mono',monospace;}
+  .receipt::before,.receipt::after{content:"";display:block;height:8px;background:
+    linear-gradient(135deg, var(--paper) 50%, transparent 50%) 0 0/8px 8px repeat-x,
+    linear-gradient(-135deg, var(--paper) 50%, transparent 50%) 0 0/8px 8px repeat-x;
+    background-position: top left, top left; margin:0 -20px; position:absolute; left:0; right:0;}
+  .receipt::before{top:-1px;}
+  .receipt::after{bottom:-1px; transform:rotate(180deg);}
+  .r-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;text-align:center;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:2px;}
+  .r-sub{font-size:10px;text-align:center;color:var(--ink-soft);margin-bottom:14px;}
+  .r-divider{border:none;border-top:1px dashed var(--rule-strong);margin:10px 0;}
+  .r-line-item{font-size:11px;color:var(--ink-soft);display:flex;justify-content:space-between;padding:2px 0;}
+  .store-block{margin-top:14px;padding:10px 10px 12px;border-radius:6px;border:1px solid var(--rule);}
+  .store-block.best{border-color:var(--till-green);background:var(--till-green-light);}
+  .store-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;}
+  .store-block.best .store-row{color:var(--till-green);}
+  .badge{font-size:9px;font-family:'Space Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:var(--till-green);color:var(--till-green-light);padding:2px 6px;border-radius:3px;margin-left:6px;}
+  .store-total{font-size:14px;}
+  .empty-note{font-size:12px;color:var(--ink-soft);text-align:center;padding:24px 0;font-family:'Space Grotesk',sans-serif;}
+  .print-btn{width:100%;margin-top:16px;padding:11px;background:var(--ink);color:var(--paper-strip);border:none;border-radius:6px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;letter-spacing:0.02em;}
+  .print-btn:hover{background:var(--till-green);}
+  .print-btn:disabled{background:var(--rule-strong);cursor:not-allowed;}
+  .save-note{font-size:10px;color:var(--ink-soft);text-align:center;margin-top:8px;}
+
+  /* ---- FINANCE VIEW ---- */
+  .ledger-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:700px){.ledger-grid{grid-template-columns:1fr;}}
+  .ledger-card{background:var(--paper-strip);border:1px solid var(--rule-strong);border-radius:10px;padding:18px 20px;}
+  .ledger-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .ledger-icon{width:26px;height:26px;border-radius:6px;background:var(--gold-light);color:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;}
+  .ledger-title{font-weight:600;font-size:14px;}
+  .ledger-desc{font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px;line-height:1.5;}
+  .ledger-row{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:12px;padding:7px 0;border-bottom:1px solid var(--rule);}
+  .ledger-row:last-child{border-bottom:none;}
+  .ledger-row .label{color:var(--ink-soft);}
+  .ledger-row .val{font-weight:700;}
+  .val.up{color:var(--till-green);}
+  .val.flag{color:var(--flag-red);}
+  .footnote{font-size:10px;color:var(--ink-soft);margin-top:10px;font-style:italic;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <img src="assets/costrequest_logo_final.png" alt="Costrequest" style="height:44px;width:auto;">
+      <div class="tagline">Compare · Cart · Print your order</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="compare">Compare &amp; cart</button>
+    <button class="tab" data-view="finance">Financial services</button>
+  </div>
+
+  <!-- COMPARE VIEW -->
+  <div class="view active" id="view-compare">
+    <div class="compare-grid">
+      <div class="catalog-card">
+        <div class="catalog-head">Add products to your cart</div>
+        <div id="catalog"></div>
+      </div>
+
+      <div class="receipt">
+        <div class="r-title">Price comparison</div>
+        <div class="r-sub" id="storeCount"></div>
+        <hr class="r-divider">
+        <div id="cartLines"></div>
+        <div id="storeBlocks"></div>
+        <button class="print-btn" id="printBtn" disabled>Print order</button>
+        <div class="save-note" id="saveNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINANCE VIEW -->
+  <div class="view" id="view-finance">
+    <div class="ledger-grid">
+
+      <div class="ledger-card">
+        <div class="ledger-head"><div class="ledger-icon">Ksh</div><div class="ledger-title">Banking costs</div></div>
+        <div class="ledger-desc">What it costs to move and hold your money — pulled from published bank tariff guides.</div>
+        <div class="ledger-row"><span class="label">M-Pesa to bank transfer</span><span class="val">30</span></div>
+        <div class="ledger-row"><span class="label">ATM withdrawal (own bank)</span><span class="val">0</span></div>
+        <div class="ledger-row"><span class="label">ATM withdrawal (other bank)</span><span class="val flag">100</span></div>
+        <div class="ledger-row"><span class="label">Monthly ledger fee</span><span class="val">150</span></div>
+        <div class="ledger-row"><span class="label">RTGS transfer</span><span class="val flag">550</span></div>
+        <div class="footnote">Sample tariffs — connect a live bank rate feed to replace these.</div>
+      </div>
+
+      <div class="ledger-card">
+        <div class="ledger-head"><div class="ledger-icon">%</div><div class="ledger-title">Money market funds</div></div>
+        <div class="ledger-desc">Last month's average annualised yield, before withholding tax.</div>
+        <div class="ledger-row"><span class="label">CIC Money Market Fund</span><span class="val up">16.2%</span></div>
+        <div class="ledger-row"><span class="label">Sanlam MMF</span><span class="val up">15.8%</span></div>
+        <div class="ledger-row"><span class="label">Etica MMF</span><span class="val up">17.1%</span></div>
+        <div class="ledger-row"><span class="label">Stanbic MMF</span><span class="val up">15.4%</span></div>
+        <div class="footnote">Rates fluctuate monthly — refresh from fund manager fact sheets.</div>
+      </div>
+
+      <div class="ledger-card">
+        <div class="ledger-head"><div class="ledger-icon">Gov</div><div class="ledger-title">Government securities</div></div>
+        <div class="ledger-desc">Treasury bonds and bills — current indicative coupon and tenor.</div>
+        <div class="ledger-row"><span class="label">91-day T-bill</span><span class="val up">15.9%</span></div>
+        <div class="ledger-row"><span class="label">182-day T-bill</span><span class="val up">16.3%</span></div>
+        <div class="ledger-row"><span class="label">364-day T-bill</span><span class="val up">16.6%</span></div>
+        <div class="ledger-row"><span class="label">5-year Treasury bond</span><span class="val up">14.8%</span></div>
+        <div class="footnote">Sourced from Central Bank of Kenya auction results.</div>
+      </div>
+
+      <div class="ledger-card">
+        <div class="ledger-head"><div class="ledger-icon">Div</div><div class="ledger-title">Dividends &amp; rebates</div></div>
+        <div class="ledger-desc">SACCO and cooperative payouts declared this financial year.</div>
+        <div class="ledger-row"><span class="label">Stima SACCO dividend</span><span class="val up">14%</span></div>
+        <div class="ledger-row"><span class="label">Stima SACCO interest on deposits</span><span class="val up">9%</span></div>
+        <div class="ledger-row"><span class="label">Supermarket loyalty rebate</span><span class="val up">2%</span></div>
+        <div class="footnote">Figures illustrative — wire this card to real AGM declarations.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const products = [
+  {id:'eggs', name:'Eggs (tray of 12)', unit:'per tray', prices:{Carrefour:150, Naivas:180, Quickmart:170, Chandarana:180}},
+  {id:'milk', name:'Fresh milk 500ml', unit:'per pkt', prices:{Carrefour:60, Naivas:58, Quickmart:62, Chandarana:65}},
+  {id:'bread', name:'White bread 400g', unit:'per loaf', prices:{Carrefour:65, Naivas:68, Quickmart:63, Chandarana:70}},
+  {id:'rice', name:'Pishori rice 2kg', unit:'per bag', prices:{Carrefour:420, Naivas:410, Quickmart:435, Chandarana:400}},
+  {id:'sugar', name:'Sugar 2kg', unit:'per bag', prices:{Carrefour:290, Naivas:295, Quickmart:280, Chandarana:300}},
+  {id:'oil', name:'Cooking oil 2L', unit:'per bottle', prices:{Carrefour:610, Naivas:590, Quickmart:620, Chandarana:600}},
+  {id:'flour', name:'Maize flour 2kg', unit:'per pkt', prices:{Carrefour:215, Naivas:210, Quickmart:220, Chandarana:212}},
+  {id:'tea', name:'Tea leaves 500g', unit:'per pkt', prices:{Carrefour:250, Naivas:245, Quickmart:255, Chandarana:248}},
+];
+const stores = ['Carrefour','Naivas','Quickmart','Chandarana'];
+const cart = {};
+
+function fmt(n){ return 'Ksh ' + n.toLocaleString('en-KE', {maximumFractionDigits:0}); }
+
+function renderCatalog(){
+  const el = document.getElementById('catalog');
+  el.innerHTML = products.map(p => `
+    <div class="prod-row">
+      <div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-unit">${p.unit}</div>
+      </div>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="changeQty('${p.id}',-1)" aria-label="Remove one">−</button>
+        <span class="qty-num" id="qty-${p.id}">${cart[p.id]||0}</span>
+        <button class="qty-btn" onclick="changeQty('${p.id}',1)" aria-label="Add one">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, delta){
+  const next = (cart[id]||0) + delta;
+  cart[id] = Math.max(0, next);
+  if(cart[id] === 0) delete cart[id];
+  document.getElementById('qty-'+id).textContent = cart[id]||0;
+  renderReceipt();
+}
+
+function renderReceipt(){
+  const items = Object.keys(cart);
+  const cartLines = document.getElementById('cartLines');
+  const storeBlocks = document.getElementById('storeBlocks');
+  const printBtn = document.getElementById('printBtn');
+  const storeCount = document.getElementById('storeCount');
+  storeCount.textContent = stores.length + ' supermarkets checked';
+
+  if(items.length === 0){
+    cartLines.innerHTML = '<div class="empty-note">Your cart is empty.<br>Add products from the list.</div>';
+    storeBlocks.innerHTML = '';
+    printBtn.disabled = true;
+    document.getElementById('saveNote').textContent = '';
+    return;
+  }
+
+  cartLines.innerHTML = items.map(id => {
+    const p = products.find(x=>x.id===id);
+    return `<div class="r-line-item"><span>${p.name} × ${cart[id]}</span></div>`;
+  }).join('');
+
+  const totals = stores.map(store => {
+    let total = 0;
+    items.forEach(id => {
+      const p = products.find(x=>x.id===id);
+      total += p.prices[store] * cart[id];
+    });
+    return {store, total};
+  }).sort((a,b) => a.total - b.total);
+
+  const cheapest = totals[0].total;
+  const mostExpensive = totals[totals.length-1].total;
+  const savings = mostExpensive - cheapest;
+
+  storeBlocks.innerHTML = totals.map((t,i) => `
+    <div class="store-block ${i===0 ? 'best' : ''}">
+      <div class="store-row">
+        <span>${t.store}${i===0 ? '<span class="badge">Best value</span>' : ''}</span>
+        <span class="store-total">${fmt(t.total)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  printBtn.disabled = false;
+  document.getElementById('saveNote').textContent = savings > 0
+    ? `You save ${fmt(savings)} shopping at ${totals[0].store} vs ${totals[totals.length-1].store}`
+    : '';
+}
+
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+renderCatalog();
+renderReceipt();
+</script>
+</body>
+</html>

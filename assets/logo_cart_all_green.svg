@@ -1,0 +1,15 @@
+<svg width="720" height="220" viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="220" fill="#ECE8DD"/>
+
+  <g transform="translate(30,26)">
+    <path d="M20 26 H45 L60 130 H180"
+          fill="none" stroke="#1F5C3F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M60 130 L82 60 H196 L177 116 C174 124 167 130 158 130 H68"
+          fill="none" stroke="#1F5C3F" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="86" cy="158" r="13" fill="#1F5C3F"/>
+    <circle cx="150" cy="158" r="13" fill="#1F5C3F"/>
+  </g>
+
+  <text x="230" y="115" font-family="'Space Grotesk', Arial, sans-serif" font-weight="700" font-size="56" letter-spacing="-1" fill="#1F5C3F">costrequest</text>
+  <text x="230" y="142" font-family="'Space Mono', monospace" font-size="13" letter-spacing="2" fill="#1F5C3F">COMPARE · CART · PRINT YOUR ORDER</text>
+</svg>

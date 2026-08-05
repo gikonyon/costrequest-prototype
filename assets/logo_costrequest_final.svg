@@ -1,0 +1,19 @@
+<svg width="860" height="330" viewBox="0 0 860 330" xmlns="http://www.w3.org/2000/svg">
+  <rect width="860" height="330" fill="#FFFFFF"/>
+
+  <g transform="translate(30,20)">
+    <path d="M18 62 A20 20 0 0 1 58 62" fill="#9DBB80"/>
+
+    <path d="M45 60 L135 150" fill="none" stroke="#1A1A1A" stroke-width="34" stroke-linecap="round"/>
+
+    <polygon points="110,148 195,148 178,215 150,215" fill="#1A1A1A"/>
+    <polygon points="195,148 290,148 250,215 178,215" fill="#9DBB80"/>
+
+    <rect x="130" y="178" width="130" height="20" rx="4" fill="#1A1A1A"/>
+
+    <circle cx="152" cy="240" r="17" fill="#1A1A1A"/>
+    <circle cx="222" cy="240" r="17" fill="#1A1A1A"/>
+  </g>
+
+  <text x="360" y="185" font-family="Georgia, 'PT Serif', 'Times New Roman', serif" font-weight="700" font-size="86" fill="#2E5A20">CostRequest</text>
+</svg>
